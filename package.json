@@ -1,0 +1,24 @@
+{
+  "name": "json-to-org-table",
+  "version": "1.0.0",
+  "description": "Pipe and transform json logs into a org-mode table",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walkermalling/json-to-org-table.git"
+  },
+  "keywords": [
+    "json",
+    "org-mode",
+    "table"
+  ],
+  "author": "Walker Malling",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/walkermalling/json-to-org-table/issues"
+  },
+  "homepage": "https://github.com/walkermalling/json-to-org-table#readme"
+}
