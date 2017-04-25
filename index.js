@@ -1,4 +1,20 @@
-const EXPAND_OBJECTS = true;
+const args = process.argv.slice(2);
+
+const opts = args.reduce((accumulator, val, index, arr) => {
+  if (val[0] === '-') {
+    const name = val.slice(1);
+    accumulator[name] = [];
+    var i = index + 1;
+    while (arr[i] && arr[i][0] !== '-') {
+      accumulator[name].push(arr[i]);
+      i += 1;
+    }
+  }
+  return accumulator;
+}, {});
+
+console.log(opts);
+
 const keyToColumnNumber = {};
 
 const getColumnNumber = (key) => {
@@ -6,24 +22,23 @@ const getColumnNumber = (key) => {
     keyToColumnNumber[key] = Object.keys(keyToColumnNumber).length;
   }
   return keyToColumnNumber[key];
-}
+};
 
 const writeToRow = (line) => {
   var row = [];
   Object.keys(line).forEach(function (key) {
     if (typeof line[key] === 'object') {
-      if (EXPAND_OBJECTS) {
-        Object.keys(line[key]).forEach(function (subKey){
-          row[getColumnNumber(`${key}:${subKey}`)] = line[key][subKey];
-        });
-      } else {
-        // TODO writing newlines confuses org-mode
-        const pairs = Object.keys(line[key]).map(function (subKey){
-          return `${subKey}: ${line[key][subKey]}`;
-        });
-        row[getColumnNumber(key)] = pairs.join('\n');
-      }
+      Object.keys(line[key]).forEach(function (subKey){
+        const combinedKey = `${key}:${subKey}`;
+        if (opts.i.indexOf(combinedKey) > -1) {
+          return;
+        }
+        row[getColumnNumber(`${key}:${subKey}`)] = line[key][subKey];
+      });
     } else {
+      if (opts.i.indexOf(key) > -1) {
+        return;
+      }
       row[getColumnNumber(key)] = line[key];
     }
   });
@@ -62,3 +77,4 @@ process.stdin.on('data', (chunk) => {
 process.stdin.on('end', () => {
   parseLog(accumulator);
 });
+
