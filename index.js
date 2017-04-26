@@ -13,7 +13,15 @@ const opts = args.reduce((accumulator, val, index, arr) => {
   return accumulator;
 }, {});
 
-console.log(opts);
+const approved = (key) => {
+  if (opts.j) {
+    return opts.j.indexOf(key) > -1;
+  }
+  if (opts.i) {
+    return opts.i.indexOf(key) === -1;
+  }
+  return true;
+};
 
 const keyToColumnNumber = {};
 
@@ -30,16 +38,14 @@ const writeToRow = (line) => {
     if (typeof line[key] === 'object') {
       Object.keys(line[key]).forEach(function (subKey){
         const combinedKey = `${key}:${subKey}`;
-        if (opts.i.indexOf(combinedKey) > -1) {
-          return;
+        if (approved(combinedKey)) {
+          row[getColumnNumber(`${key}:${subKey}`)] = line[key][subKey];
         }
-        row[getColumnNumber(`${key}:${subKey}`)] = line[key][subKey];
       });
     } else {
-      if (opts.i.indexOf(key) > -1) {
-        return;
+      if (approved(key)) {
+        row[getColumnNumber(key)] = line[key];
       }
-      row[getColumnNumber(key)] = line[key];
     }
   });
   process.stdout.write(`|${row.join('|')}\n`);
