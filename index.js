@@ -1,4 +1,5 @@
 const args = process.argv.slice(2);
+const url = require('url');
 
 const opts = args.reduce((accumulator, val, index, arr) => {
   if (val[0] === '-') {
@@ -23,10 +24,24 @@ const approved = (key) => {
   return true;
 };
 
+const transformer = (key) => ({
+
+});
+
+const getTransformer = (key) => {
+  const transformers = {
+    'event:url': (val) => url.parse(val).pathname,
+  };
+  if (transformers[key]) {
+    return transformers[key];
+  }
+  return (thing) => thing;
+};
+
 const keyToColumnNumber = {};
 
 const getColumnNumber = (key) => {
-  if (!keyToColumnNumber[key]) {
+  if (keyToColumnNumber[key] === undefined) {
     keyToColumnNumber[key] = Object.keys(keyToColumnNumber).length;
   }
   return keyToColumnNumber[key];
@@ -38,13 +53,15 @@ const writeToRow = (line) => {
     if (typeof line[key] === 'object') {
       Object.keys(line[key]).forEach(function (subKey){
         const combinedKey = `${key}:${subKey}`;
+        const transformer = getTransformer(combinedKey); 
         if (approved(combinedKey)) {
-          row[getColumnNumber(`${key}:${subKey}`)] = line[key][subKey];
+          row[getColumnNumber(combinedKey)] = transformer(line[key][subKey]);
         }
       });
     } else {
+      const transformer = getTransformer(key);
       if (approved(key)) {
-        row[getColumnNumber(key)] = line[key];
+        row[getColumnNumber(key)] = transformer(line[key]);
       }
     }
   });
