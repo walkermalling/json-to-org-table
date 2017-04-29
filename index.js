@@ -24,10 +24,6 @@ const approved = (key) => {
   return true;
 };
 
-const transformer = (key) => ({
-
-});
-
 const getTransformer = (key) => {
   const transformers = {
     'event:url': (val) => url.parse(val).pathname,
@@ -49,9 +45,9 @@ const getColumnNumber = (key) => {
 
 const writeToRow = (line) => {
   var row = [];
-  Object.keys(line).forEach(function (key) {
+  Object.keys(line).forEach((key) => {
     if (typeof line[key] === 'object') {
-      Object.keys(line[key]).forEach(function (subKey){
+      Object.keys(line[key]).forEach((subKey) => {
         const combinedKey = `${key}:${subKey}`;
         const transformer = getTransformer(combinedKey); 
         if (approved(combinedKey)) {
@@ -81,16 +77,35 @@ const parseLog = (log) => {
     .forEach(writeToRow);
   
   const headings = [];
-  Object.keys(keyToColumnNumber).forEach(function (value, index) {
+  Object.keys(keyToColumnNumber).forEach((value, index) => {
     headings[index] = value;
   });
 
-  process.stdout.write(`|${headings.join('|')}\n`);
+  // NOTE typically, we can't be sure of column headings until all logs are processed
+  // so unfortunately this row of headings is printed at the bottom of the table
+
+  if (!opts.j) {
+    process.stdout.write(`|${headings.join('|')}\n`);
+  }
 };
+
+// NOTE If the -j flag is set, we already know which headings we're filtering for,
+// and we can print them first, before we receive any input
+// added benefit: the order in which the args are passed will be the order of columns
+if (opts.j) {
+  const headers = [];
+  opts.j.forEach((key) => {
+    headers[getColumnNumber(key)] = key;
+  });
+  process.stdout.write(`|${headers.join('|')}\n`);
+}
 
 process.stdin.resume();
 process.stdin.setEncoding('utf8');
 
+// NOTE accumulating stdin in this way assumes that the input is not indeterminate
+// this can be changed to look for newlines as we read chunks and write out
+// transformed logs as we go
 var accumulator = '';
 
 process.stdin.on('data', (chunk) => {
