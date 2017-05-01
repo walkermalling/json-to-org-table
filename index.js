@@ -1,6 +1,9 @@
 const args = process.argv.slice(2);
 const url = require('url');
 
+const DELIMITER = ',';
+const BOOKENDER = '';
+
 const opts = args.reduce((accumulator, val, index, arr) => {
   if (val[0] === '-') {
     const name = val.slice(1);
@@ -26,7 +29,7 @@ const approved = (key) => {
 
 const getTransformer = (key) => {
   const transformers = {
-    'event:url': (val) => url.parse(val).pathname,
+    'event:url': (val) => url.parse(val).path,
   };
   if (transformers[key]) {
     return transformers[key];
@@ -43,7 +46,11 @@ const getColumnNumber = (key) => {
   return keyToColumnNumber[key];
 };
 
-const writeToRow = (line) => {
+const writeArrayToStdout = (arr) => {
+  process.stdout.write(`${BOOKENDER}${arr.join(DELIMITER)}\n`);
+}
+
+const doRow = (line) => {
   var row = [];
   Object.keys(line).forEach((key) => {
     if (typeof line[key] === 'object') {
@@ -61,7 +68,7 @@ const writeToRow = (line) => {
       }
     }
   });
-  process.stdout.write(`|${row.join('|')}\n`);
+  writeArrayToStdout(row);
 };
 
 const parseLog = (log) => {
@@ -74,18 +81,18 @@ const parseLog = (log) => {
       return result;
     })
     .filter(stuff => !!stuff)
-    .forEach(writeToRow);
+    .forEach(doRow);
   
-  const headings = [];
+  const headers = [];
   Object.keys(keyToColumnNumber).forEach((value, index) => {
-    headings[index] = value;
+    headers[index] = value;
   });
 
   // NOTE typically, we can't be sure of column headings until all logs are processed
   // so unfortunately this row of headings is printed at the bottom of the table
 
   if (!opts.j) {
-    process.stdout.write(`|${headings.join('|')}\n`);
+    writeArrayToStdout(headers);
   }
 };
 
@@ -97,7 +104,7 @@ if (opts.j) {
   opts.j.forEach((key) => {
     headers[getColumnNumber(key)] = key;
   });
-  process.stdout.write(`|${headers.join('|')}\n`);
+  writeArrayToStdout(headers);
 }
 
 process.stdin.resume();
