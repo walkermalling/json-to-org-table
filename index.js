@@ -1,28 +1,12 @@
-const args = process.argv.slice(2);
 const url = require('url');
-
-const DELIMITER = ',';
-const BOOKENDER = '';
-
-const opts = args.reduce((accumulator, val, index, arr) => {
-  if (val[0] === '-') {
-    const name = val.slice(1);
-    accumulator[name] = [];
-    var i = index + 1;
-    while (arr[i] && arr[i][0] !== '-') {
-      accumulator[name].push(arr[i]);
-      i += 1;
-    }
-  }
-  return accumulator;
-}, {});
+const opts = require('./lib/parse-options');
 
 const approved = (key) => {
-  if (opts.j) {
-    return opts.j.indexOf(key) > -1;
+  if (opts.fields) {
+    return opts.fields.indexOf(key) > -1;
   }
-  if (opts.i) {
-    return opts.i.indexOf(key) === -1;
+  if (opts.ignore) {
+    return opts.ignore.indexOf(key) === -1;
   }
   return true;
 };
@@ -47,7 +31,7 @@ const getColumnNumber = (key) => {
 };
 
 const writeArrayToStdout = (arr) => {
-  process.stdout.write(`${BOOKENDER}${arr.join(DELIMITER)}\n`);
+  process.stdout.write(`${opts.prepender}${arr.join(opts.delimiter)}\n`);
 }
 
 const doRow = (line) => {
@@ -90,18 +74,17 @@ const parseLog = (log) => {
 
   // NOTE typically, we can't be sure of column headings until all logs are processed
   // so unfortunately this row of headings is printed at the bottom of the table
-
-  if (!opts.j) {
+  if (!opts.fields) {
     writeArrayToStdout(headers);
   }
 };
 
-// NOTE If the -j flag is set, we already know which headings we're filtering for,
+// NOTE If the -fields flag is set, we already know which headings we're filtering for,
 // and we can print them first, before we receive any input
-// added benefit: the order in which the args are passed will be the order of columns
-if (opts.j) {
+// added benefit: control order of columns by order of args
+if (opts.fields) {
   const headers = [];
-  opts.j.forEach((key) => {
+  opts.fields.forEach((key) => {
     headers[getColumnNumber(key)] = key;
   });
   writeArrayToStdout(headers);
